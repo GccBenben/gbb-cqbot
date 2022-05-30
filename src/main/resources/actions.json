@@ -1,0 +1,18 @@
+[
+  {
+    "action": "setu",
+    "rule": "/setu"
+  },
+  {
+    "action": "sbac",
+    "rule": "笨笨在干吗"
+  },
+  {
+    "action": "back_message",
+    "rule": "/save"
+  },
+  {
+    "action": "dice",
+    "rule": "/roll"
+  }
+]
