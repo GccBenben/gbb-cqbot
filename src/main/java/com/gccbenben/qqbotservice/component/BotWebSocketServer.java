@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.gccbenben.qqbotservice.config.WebSocketClientConfig;
 import com.gccbenben.qqbotservice.utils.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,15 +58,7 @@ public class BotWebSocketServer {
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        log.info("on message: " + message);
-        ObjectNode object = JSONUtil.toObjectNode(message);
-        if (object.has("echo")) {
-            botMessageHandler.echo(object);
-        } else if (!object.has("post_type")) {
-            return;
-        } else if ("message".equals(object.get("post_type").asText())) {
-            botMessageHandler.handleMessage(object);
-        }
+        botMessageHandler.messageHandle(message, log);
     }
 
     @OnError

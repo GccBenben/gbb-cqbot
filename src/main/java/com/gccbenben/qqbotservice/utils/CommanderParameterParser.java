@@ -23,7 +23,7 @@ public class CommanderParameterParser {
      * @param commander 待解析命令
      * @return {@link List}
      */
-    public static List getOptions(String commander) {
+    public static List<String> getOptions(String commander) {
         String[] parameters = commander.toLowerCase(Locale.ROOT).split(" ");
         List options = Arrays.asList(parameters)
                 .stream()

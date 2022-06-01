@@ -1,18 +1,37 @@
 [
   {
     "action": "setu",
-    "rule": "/setu"
+    "rule": "/setu",
+    "privilege": "all"
   },
   {
     "action": "sbac",
-    "rule": "笨笨在干吗"
+    "rule": "笨笨在干吗",
+    "privilege": "all"
   },
   {
     "action": "back_message",
-    "rule": "/save"
+    "rule": "/save",
+    "privilege": "all"
   },
   {
     "action": "dice",
-    "rule": "/roll"
+    "rule": "/roll",
+    "privilege": "all"
+  },
+  {
+    "action": "pixivRank",
+    "rule": "/rank",
+    "privilege": "all"
+  },
+  {
+    "action": "ourOcgSearch",
+    "rule": "/OCG",
+    "privilege": "all"
+  },
+  {
+    "action": "pubg",
+    "rule": "/pubg",
+    "privilege": "all"
   }
 ]

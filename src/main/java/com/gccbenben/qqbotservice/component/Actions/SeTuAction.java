@@ -12,9 +12,12 @@ import com.gccbenben.qqbotservice.utils.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 处理瑟瑟
@@ -36,6 +39,8 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
 //    private final static String setuPath = "/Users/gccbenben/qqbot/go-cqhttp_darwin_arm64/data/images/setu";
     private final static String setuPath = "/home/ubuntu/qqbot/data/images/setu";
 
+    private String searchEngine;
+
     @Override
     public String handleMethod(ObjectNode message) {
         String[] options = message.get("message").asText().split(" ");
@@ -43,22 +48,32 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
         if (options[1].contains("-")) {
             searchEngine = options[1].split("-")[1].toLowerCase(Locale.ROOT);
         } else {
-            searchEngine = "huashi";
+            searchEngine = "pixiv";
         }
         if (options.length > 1) {
             String searchOptions = "";
-            if (options[1].contains("-") && options.length > 2) {
-                searchOptions = options[2];
-            } else {
-                searchOptions = options[1];
+            List<String> searchInput = Arrays.asList(options).stream().filter(item -> !item.startsWith("/") && !item.startsWith("-")).collect(Collectors.toList());
+            if(!searchInput.isEmpty()){
+                for(String item : searchInput){
+                    searchOptions += item + " ";
+                }
+            }else{
+                super.botBaseService.sendMessageAuto("未输入瑟瑟关键字", message);
+                return "";
             }
+//            if (options[1].contains("-") && options.length > 2) {
+//                searchOptions = options[2];
+//            } else {
+//                searchOptions = options[1];
+//            }
 
             if ("huashi".equals(searchEngine)) {
                 this.getHuaShiImage(searchOptions, message);
             } else if ("pixiv".equals(searchEngine)) {
                 this.getPixivImage(searchOptions, message);
             } else {
-                this.getHuaShiImage(searchOptions, message);
+//                this.getHuaShiImage(searchOptions, message);
+                this.getPixivImage(searchOptions, message);
             }
 
         } else {
@@ -67,7 +82,19 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
 
 
 
-//        List options = CommanderParameterParser.getOptions(message.get("message").asText());
+//        List<String> options = CommanderParameterParser.getOptions(message.get("message").asText());
+//        options.stream().forEach(option ->{
+//            try{
+//                Method method = this.getClass().getDeclaredMethod(option, String.class);
+//                if(null != method){
+//                    method.invoke(this, option);
+//                }else{
+//                    log.error("需要执行的参数不存在， option: " + option);
+//                }
+//            }catch (Exception e){
+//                log.error("执行失败, error: ", e);
+//            }
+//        });
 
 
         return "";
@@ -111,6 +138,9 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
             String targetUrl = searchOption + " 1000users入り";
             targetUrl = pixivEngineUrl + "?word=" + URLEncoder.encode(targetUrl, "UTF-8");
             String response = HttpUtil.sendHttp(HttpUtil.HttpRequestMethedEnum.HttpGet, targetUrl, null, null);
+            if(null == response){
+                super.botBaseService.sendMessageAuto("不准瑟瑟！", message);
+            }
             ObjectNode responseJSON = JSONUtil.toObjectNode(response);
 
             //获取随机图片index
@@ -143,7 +173,9 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
             ArrayNode tags = (ArrayNode) responseJSON.get("illusts").get(picIndex).get("tags");
             Boolean r18Tag = false;
             for (JsonNode tag : tags) {
-                if ("R-18".equals(tag.get("name"))) {
+                if ("R-18".equals(tag.get("name").asText())) {
+                    r18Tag = true;
+                }else if("R-18G".equals(tag.get("name").asText())){
                     r18Tag = true;
                 }
             }
@@ -156,6 +188,7 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
                 return;
             }
 
+            //图片下载
             Map header = new HashMap<>();
             header.put("Referer", "https://www.pixiv.net/");
 
@@ -165,8 +198,8 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
             String savePath = setuPath + "/" + time;
             String fileName = ImageDownloadUtil.download(resourceWebUrl, savePath, header);
 
+            //返回消息封装
             String resourcePath = "/setu" + "/" + time + fileName;
-
             String responseMessage = "pid: " + pid + "\r\n";
             responseMessage += "title: " + title + "\r\n";
             responseMessage += "artist: " + artistName + "\r\n";
