@@ -1,5 +1,6 @@
 package com.gccbenben.qqbotservice.service;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;
 
@@ -25,4 +26,6 @@ public interface BotBaseService {
     void rollBackPrivateMessage(String id);
 
     void updateLastMessageInfo(String echoId, String messageId);
+
+    void sendGroupMessageForward(ArrayNode message, String groupId);
 }

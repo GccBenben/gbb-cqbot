@@ -1,5 +1,6 @@
 package com.gccbenben.qqbotservice.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -157,6 +158,54 @@ public class HttpUtil {
             request += key + "=" + params.get(key) + "&";
         }
         return request;
+    }
+
+    public static String sendHttpByJson(HttpRequestMethedEnum requestMethod, String url, JsonNode params, Map<String, String> header) {
+        //1、创建一个HttpClient对象;
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = null;
+        String responseContent = null;
+        //2、创建一个Http请求对象并设置请求的URL，比如GET请求就创建一个HttpGet对象，POST请求就创建一个HttpPost对象;
+        HttpRequestBase request = requestMethod.createRequest(url);
+        request.setConfig(requestConfig);
+        //3、如果需要可以设置请求对象的请求头参数，也可以往请求对象中添加请求参数;
+        if (header != null) {
+            for (Map.Entry<String, String> entry : header.entrySet()) {
+                request.setHeader(entry.getKey(), entry.getValue());
+            }
+        }
+        // 往对象中添加相关参数
+        try {
+            if (params != null) {
+                ((HttpEntityEnclosingRequest) request).setEntity(
+                        new StringEntity(JSONUtil.toJSONString(params),
+                                ContentType.create("application/json", "UTF-8")));
+            }
+            //4、调用HttpClient对象的execute方法执行请求;
+            httpResponse = httpClient.execute(request);
+            //5、获取请求响应对象和响应Entity;
+            HttpEntity httpEntity = httpResponse.getEntity();
+            //6、从响应对象中获取响应状态，从响应Entity中获取响应内容;
+            if (httpEntity != null) {
+                responseContent = EntityUtils.toString(httpEntity, "UTF-8");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                //7、关闭响应对象;
+                if (httpResponse != null) {
+                    httpResponse.close();
+                }
+                //8、关闭HttpClient.
+                if (httpClient != null) {
+                    httpClient.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return responseContent;
     }
 
     public enum HttpRequestMethedEnum {

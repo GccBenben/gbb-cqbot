@@ -15,8 +15,8 @@ import javax.sql.DataSource;
  * @author GccBenben
  * @date 2021/08/05
  */
-@Configuration
-@ComponentScan
+//@Configuration
+//@ComponentScan
 public class MyBatisConfig {
     @Autowired
     private DataSource dataSource;

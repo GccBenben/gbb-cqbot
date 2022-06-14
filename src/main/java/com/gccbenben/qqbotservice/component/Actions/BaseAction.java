@@ -2,8 +2,11 @@ package com.gccbenben.qqbotservice.component.Actions;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gccbenben.qqbotservice.service.BotBaseService;
+import jdk.nashorn.internal.ir.annotations.Reference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 
 /**
  * 基本action
@@ -16,6 +19,7 @@ public class BaseAction {
 
 
     protected static BotBaseService botBaseService;
+
 
     /**
      * 注入service

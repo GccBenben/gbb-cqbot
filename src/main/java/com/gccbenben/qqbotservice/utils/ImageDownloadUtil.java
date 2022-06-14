@@ -78,6 +78,7 @@ public class ImageDownloadUtil {
 
         } catch (IOException e) {
             e.printStackTrace();
+            throw e;
         } finally {
             try {
                 //7、关闭响应对象;

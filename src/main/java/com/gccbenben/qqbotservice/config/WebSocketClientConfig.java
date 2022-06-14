@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import java.net.URI;
 
 /**
- * websocket客户端配置
+ * websocket客户端配置,测试用，用于主动发起websocket连接
  *
  * @author GccBenben
  * @date 2022/06/01

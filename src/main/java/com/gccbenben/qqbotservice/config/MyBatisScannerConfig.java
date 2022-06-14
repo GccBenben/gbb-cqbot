@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
  * @author GccBenben
  * @date 2021/08/05
  */
-@Configuration
+//@Configuration
 public class MyBatisScannerConfig {
     @Bean
     public MapperScannerConfigurer MapperScannerConfigurer() {

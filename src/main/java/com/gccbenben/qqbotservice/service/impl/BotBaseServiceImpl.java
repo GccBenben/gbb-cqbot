@@ -1,5 +1,7 @@
 package com.gccbenben.qqbotservice.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gccbenben.qqbotservice.bean.GroupInfo;
 import com.gccbenben.qqbotservice.bean.PrivateUserInfo;
@@ -10,14 +12,18 @@ import com.gccbenben.qqbotservice.component.RedisUtil;
 import com.gccbenben.qqbotservice.service.BotBaseService;
 import com.gccbenben.qqbotservice.utils.HttpUtil;
 import com.gccbenben.qqbotservice.utils.JSONUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class BotBaseServiceImpl implements BotBaseService {
 
     @Value("${qq-bot-end-point}")
@@ -40,7 +46,7 @@ public class BotBaseServiceImpl implements BotBaseService {
         String key = UUID.randomUUID().toString();
         object.setEcho(key);
 
-        Object user = redisUtil.get(id + "_private");
+//        Object user = redisUtil.get(id + "_private");
 
         if (redisUtil.get(id + "_private") == null) {
             PrivateUserInfo userInfo = new PrivateUserInfo();
@@ -136,7 +142,7 @@ public class BotBaseServiceImpl implements BotBaseService {
      */
     @Override
     public void rollBackPrivateMessage(String id) {
-        Object user = redisUtil.get(id + "_private");
+//        Object user = redisUtil.get(id + "_private");
         PrivateUserInfo userInfo = JSONUtil.parseObject(redisUtil.get(id + "_private").toString(), PrivateUserInfo.class);
         String lastMessageId = userInfo.getLastMessageId();
         if(StringUtils.isNotEmpty(lastMessageId)){
@@ -170,6 +176,19 @@ public class BotBaseServiceImpl implements BotBaseService {
                 userInfo.setLastMessageId(messageId);
                 redisUtil.put(userId + "_private", JSONUtil.toJSONString(userInfo));
             }
+        }
+    }
+
+    @Override
+    public void sendGroupMessageForward(ArrayNode message, String groupId) {
+        ObjectNode requestParam = JSONUtil.buildJSONObject();
+        requestParam.put("group_id", groupId);
+        requestParam.set("messages", message);
+        String response = HttpUtil.sendHttpByJson(HttpUtil.HttpRequestMethedEnum.HttpPost, botEndPoint + "/send_group_forward_msg", requestParam, null);
+        log.info("sendGroupMessageForward response: " + response);
+        ObjectNode responseNode = JSONUtil.toObjectNode(response);
+        if(responseNode.has("status") && "failed".equals(responseNode.get("status"))){
+            sendGroupMessage("获取排行图片失败或消息发送被拦截", groupId);
         }
     }
 

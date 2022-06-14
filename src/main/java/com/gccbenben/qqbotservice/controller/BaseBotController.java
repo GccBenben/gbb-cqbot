@@ -6,6 +6,7 @@ import com.gccbenben.qqbotservice.bean.realWebSocketRequestMessage.GetFriendList
 import com.gccbenben.qqbotservice.bean.realWebSocketRequestMessage.SendPrivateMessageRequestObject;
 import com.gccbenben.qqbotservice.component.BotWebSocketServer;
 import com.gccbenben.qqbotservice.service.BotBaseService;
+import com.gccbenben.qqbotservice.service.PixivHandleService;
 import com.gccbenben.qqbotservice.utils.HttpUtil;
 import com.gccbenben.qqbotservice.utils.JSONUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +21,13 @@ public class BaseBotController {
     @Autowired
     private BotBaseService botBaseService;
 
+    @Autowired
+    private PixivHandleService pixivHandleService;
+
     @PostMapping("/test")
     @ResponseBody
     public String testContronller() {
-        return "testSuccess";
+        return JSONUtil.toJSONString(pixivHandleService.test(null));
     }
 
     /**

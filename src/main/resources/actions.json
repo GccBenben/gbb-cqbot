@@ -20,13 +20,18 @@
     "privilege": "all"
   },
   {
-    "action": "pixivRank",
+    "action": "pixiv_rank",
     "rule": "/rank",
     "privilege": "all"
   },
   {
-    "action": "ourOcgSearch",
-    "rule": "/OCG",
+    "action": "pixiv_sese_today",
+    "rule": "/sese",
+    "privilege": "all"
+  },
+  {
+    "action": "our_ocg_search",
+    "rule": "/ocg",
     "privilege": "all"
   },
   {
