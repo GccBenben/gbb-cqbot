@@ -76,6 +76,11 @@ public class PixivHandleServiceImpl implements PixivHandleService {
     }
 
     @Override
+    public void saveResourceInfo(PixivPictureInfo pixivPictureInfo){
+        updateSinglePixivPictureInfo(pixivPictureInfo);
+    }
+
+    @Override
     public String pixivImageDownload(String resourceWebUrl) throws Exception {
         //图片下载
         Map header = new HashMap<>();

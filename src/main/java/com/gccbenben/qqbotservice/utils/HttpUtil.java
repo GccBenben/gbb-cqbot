@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -15,6 +18,8 @@ import org.apache.http.util.EntityUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -70,6 +75,7 @@ public class HttpUtil {
             }
             //4、调用HttpClient对象的execute方法执行请求;
             httpResponse = httpClient.execute(request);
+
             //5、获取请求响应对象和响应Entity;
             HttpEntity httpEntity = httpResponse.getEntity();
             //6、从响应对象中获取响应状态，从响应Entity中获取响应内容;
@@ -93,6 +99,71 @@ public class HttpUtil {
             }
         }
         return responseContent;
+    }
+
+    /**
+     * 通过字符串发送http,获得返回值以及cookie
+     *
+     * @param requestMethod 请求方法
+     * @param url           url
+     * @param params        参数个数
+     * @param header        头
+     * @return {@link Map}
+     */
+    public static Map sendHttpByStringGetCookie(HttpRequestMethedEnum requestMethod, String url, String params, Map<String, String> header) {
+        //1、创建一个HttpClient对象;
+        BasicCookieStore cookieStore = new BasicCookieStore();
+//        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpClient httpClient = HttpClients.custom().setDefaultCookieStore(cookieStore).build();
+        CloseableHttpResponse httpResponse = null;
+        String responseContent = null;
+        Map response = new HashMap();
+        //2、创建一个Http请求对象并设置请求的URL，比如GET请求就创建一个HttpGet对象，POST请求就创建一个HttpPost对象;
+        HttpRequestBase request = requestMethod.createRequest(url);
+        request.setConfig(requestConfig);
+        //3、如果需要可以设置请求对象的请求头参数，也可以往请求对象中添加请求参数;
+        if (header != null) {
+            for (Map.Entry<String, String> entry : header.entrySet()) {
+                request.setHeader(entry.getKey(), entry.getValue());
+            }
+        }
+        // 往对象中添加相关参数
+        try {
+            if (params != null) {
+                ((HttpEntityEnclosingRequest) request).setEntity(
+                        new StringEntity(params));
+            }
+            //4、调用HttpClient对象的execute方法执行请求;
+            httpResponse = httpClient.execute(request);
+
+            //5、获取请求响应对象和响应Entity;
+            HttpEntity httpEntity = httpResponse.getEntity();
+            //6、从响应对象中获取响应状态，从响应Entity中获取响应内容;
+            if (httpEntity != null) {
+                responseContent = EntityUtils.toString(httpEntity, "UTF-8");
+            }
+
+            //获取cookie
+            List<Cookie> cookies = cookieStore.getCookies();
+            response.put("cookies", cookies);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                //7、关闭响应对象;
+                if (httpResponse != null) {
+                    httpResponse.close();
+                }
+                //8、关闭HttpClient.
+                if (httpClient != null) {
+                    httpClient.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        response.put("responseContent", responseContent);
+        return response;
     }
 
     /**
@@ -154,7 +225,7 @@ public class HttpUtil {
 
     private static String createRequestBody(Map<String, Object> params) {
         String request = "";
-        for(String key : params.keySet()){
+        for (String key : params.keySet()) {
             request += key + "=" + params.get(key) + "&";
         }
         return request;
@@ -172,6 +243,75 @@ public class HttpUtil {
         if (header != null) {
             for (Map.Entry<String, String> entry : header.entrySet()) {
                 request.setHeader(entry.getKey(), entry.getValue());
+            }
+        }
+        // 往对象中添加相关参数
+        try {
+            if (params != null) {
+                ((HttpEntityEnclosingRequest) request).setEntity(
+                        new StringEntity(JSONUtil.toJSONString(params),
+                                ContentType.create("application/json", "UTF-8")));
+            }
+            //4、调用HttpClient对象的execute方法执行请求;
+            httpResponse = httpClient.execute(request);
+            //5、获取请求响应对象和响应Entity;
+            HttpEntity httpEntity = httpResponse.getEntity();
+            //6、从响应对象中获取响应状态，从响应Entity中获取响应内容;
+            if (httpEntity != null) {
+                responseContent = EntityUtils.toString(httpEntity, "UTF-8");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                //7、关闭响应对象;
+                if (httpResponse != null) {
+                    httpResponse.close();
+                }
+                //8、关闭HttpClient.
+                if (httpClient != null) {
+                    httpClient.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return responseContent;
+    }
+
+    /**
+     * 通过json发送http,并附带cookie
+     *
+     * @param requestMethod 请求方法
+     * @param url           url
+     * @param params        参数个数
+     * @param header        头
+     * @param cookies       饼干
+     * @return {@link String}
+     */
+    public static String sendHttpByJson(HttpRequestMethedEnum requestMethod, String url, JsonNode params, Map<String, String> header, List<Cookie> cookies) {
+        //1、创建一个HttpClient对象;
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = null;
+        String responseContent = null;
+        //2、创建一个Http请求对象并设置请求的URL，比如GET请求就创建一个HttpGet对象，POST请求就创建一个HttpPost对象;
+        HttpRequestBase request = requestMethod.createRequest(url);
+        request.setConfig(requestConfig);
+        //3、如果需要可以设置请求对象的请求头参数，也可以往请求对象中添加请求参数;
+        if (header != null) {
+            for (Map.Entry<String, String> entry : header.entrySet()) {
+                request.setHeader(entry.getKey(), entry.getValue());
+            }
+        }
+
+        //如果cookie不为空则设置cookie
+        if(cookies != null){
+            CookieStore cookieStore = new BasicCookieStore();
+            httpClient = HttpClients.custom()
+                    .setDefaultCookieStore(cookieStore)
+                    .build();
+            for(Cookie cookie : cookies){
+                cookieStore.addCookie(cookie);
             }
         }
         // 往对象中添加相关参数

@@ -3,6 +3,7 @@ package com.gccbenben.qqbotservice.component.Actions;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.gccbenben.qqbotservice.bean.Pixiv.PixivPictureInfo;
 import com.gccbenben.qqbotservice.component.messageMethodHandleStrategy.Action;
 import com.gccbenben.qqbotservice.component.messageMethodHandleStrategy.IMethodHandleStrategy;
 import com.gccbenben.qqbotservice.service.PixivHandleService;
@@ -10,12 +11,15 @@ import com.gccbenben.qqbotservice.utils.HttpUtil;
 import com.gccbenben.qqbotservice.utils.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -34,6 +38,8 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
 
     private static final String apiUrl = "https://api.obfs.dev/api/pixiv/rank";
 
+    private static final String rankUrl = "https://www.pixiv.net/ranking.php?";
+
     protected static PixivHandleService pixivHandleService;
 
     @Autowired
@@ -45,83 +51,119 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
     public String handleMethod(ObjectNode message) {
         if ("group".equals(message.get("message_type").asText())) {
             getPixivRankImage(message);
-        }else{
+        } else {
             super.botBaseService.sendMessageAuto("rank功能不支持个人私聊", message);
         }
 
         return null;
     }
 
-    private void getPixivRankImage(ObjectNode message){
+    /**
+     * 得到pixiv等级图像
+     *
+     * @param message 消息
+     */
+    private void getPixivRankImage(ObjectNode message) {
         String groupId = message.get("group_id").asText();
 
         //获取参数
         String[] options = message.get("message").asText().split(" ");
         List<String> optionInput = Arrays.stream(options).filter(item -> item.startsWith("-")).map(item -> item.substring(1).toLowerCase(Locale.ROOT)).collect(Collectors.toList());
+        //搜索范围参数设置
         String mode = "";
-        if(!optionInput.isEmpty()){
-            if("week".equals(optionInput.get(0))){
-                mode = "week";
+
+        //搜索其余设置
+        boolean random = false;
+
+        if (!optionInput.isEmpty()) {
+            for(String option : optionInput){
+                if ("week".equals(option)) {
+                    mode = "weekly";
+                }
+
+                if ("month".equals(option)) {
+                    mode = "monthly";
+                }
+
+                if ("day".equals(option)) {
+                    mode = "daily";
+                }
+
+                if ("ori".equals(option)) {
+                    mode = "original";
+                }
+
+                if ("male".equals(option)) {
+                    mode = "male";
+                }
+
+                if("random".equals(option)){
+                    random = true;
+                }
             }
 
-            if("month".equals(optionInput.get(0))){
-                mode = "month";
-            }
-
-            if("day".equals(optionInput.get(0))){
-                mode = "day";
-            }
-
-            if("ori".equals(optionInput.get(0))){
-                mode = "week_original";
-            }
-        }else{
-            mode = "week";
-        }
-        String targetUrl = apiUrl + "?mode=" + mode + "&size=15";
-        String response = HttpUtil.sendHttp(HttpUtil.HttpRequestMethedEnum.HttpGet, targetUrl, null, null);
-        //如果接口调用没有返回值
-        if (null == response) {
-            super.botBaseService.sendMessageAuto("不准瑟瑟！", message);
-            return;
-        }
-
-        ObjectNode responseJSON = JSONUtil.toObjectNode(response);
-
-        //如果没有搜索到图片
-        if (responseJSON.has("error")) {
-            super.botBaseService.sendMessageAuto("找不到瑟瑟！", message);
-            return;
+        } else {
+            mode = "weekly";
         }
 
         super.botBaseService.sendMessageAuto("开始获取排行图片，请稍等！", message);
 
-        //只发送10条
-        ArrayNode responseArray = JSONUtil.buildJSONArray();
-        responseJSON.get("illusts").forEach(pictureInfo ->{
-            //缩小量
-            if(responseArray.size() > 10){
-                return;
-            }
-            String largeImageUrl = pictureInfo.get("image_urls").get("large").asText();
-            String mediumImageUrl = pictureInfo.get("image_urls").get("medium").asText();
-            String pid = pictureInfo.get("id").asText();
-            String title = pictureInfo.get("title").asText();
-            String artistName = pictureInfo.get("user").get("name").asText();
+        List<PixivPictureInfo> searchRankImages = getRankImageInfo(mode);
 
+        if (searchRankImages == null || searchRankImages.isEmpty()) {
+            super.botBaseService.sendMessageAuto("找不到瑟瑟！", message);
+            return;
+        }
 
-            //暂时先不管r18的情况
-            String resourcePath = pixivHandleService.getPixivImageCash(pid);
+        //如果是获取随机图片
+        if(random){
+            Random seed = new Random();
+            int picIndex = seed.nextInt(searchRankImages.size());
+            PixivPictureInfo pixivPictureInfo = searchRankImages.get(picIndex);
+
+            String resourcePath = pixivHandleService.getPixivImageCash(String.valueOf(pixivPictureInfo.getPid()));
             if (null == resourcePath) {
                 try {
-                    resourcePath = pixivHandleService.pixivImageDownload(largeImageUrl);
-                    pixivHandleService.saveResourceInfo(pid, artistName, title, resourcePath, mediumImageUrl, largeImageUrl);
+                    resourcePath = pixivHandleService.pixivImageDownload(pixivPictureInfo.getMediumUrl());
+                    pixivPictureInfo.setLocalAddress(resourcePath);
+                    pixivHandleService.saveResourceInfo(pixivPictureInfo);
                 } catch (Exception e) {
                     log.error("图片消息获取错误", e.getStackTrace());
                 }
             }
 
-            if(StringUtils.isNotEmpty(resourcePath)){
+            if (StringUtils.isNotEmpty(resourcePath)) {
+                String responseMessage = "pid: " + pixivPictureInfo.getPid() + "\r\n";
+                responseMessage += "title: " + pixivPictureInfo.getTitle() + "\r\n";
+                responseMessage += "artist: " + pixivPictureInfo.getAuthor() + "\r\n";
+                responseMessage += "[CQ:image,file=" + resourcePath + "]";
+                super.botBaseService.sendMessageAuto(responseMessage, message);
+            }
+
+            return;
+        }
+
+        //如果获取全rank
+        //只发送10条
+        ArrayNode responseArray = JSONUtil.buildJSONArray();
+        searchRankImages.stream().forEach(pixivPictureInfo -> {
+            //缩小量
+            if (responseArray.size() > 10) {
+                return;
+            }
+
+            String resourcePath = pixivHandleService.getPixivImageCash(String.valueOf(pixivPictureInfo.getPid()));
+            if (null == resourcePath) {
+                try {
+                    resourcePath = pixivHandleService.pixivImageDownload(pixivPictureInfo.getMediumUrl());
+                    pixivPictureInfo.setLocalAddress(resourcePath);
+                    pixivHandleService.saveResourceInfo(pixivPictureInfo);
+                } catch (Exception e) {
+                    log.error("图片消息获取错误", e.getStackTrace());
+                }
+            }
+
+            if (StringUtils.isNotEmpty(resourcePath)) {
                 String responseMessage = "[CQ:image,file=" + resourcePath + "]";
 
                 ObjectNode baseNode = JSONUtil.buildJSONObject();
@@ -129,18 +171,65 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
                 ObjectNode dataNode = JSONUtil.buildJSONObject();
                 dataNode.put("name", "bakabaka");
                 dataNode.put("uin", "2253141704");
-                dataNode.put("content",responseMessage);
+                dataNode.put("content", responseMessage);
                 baseNode.set("data", dataNode);
                 responseArray.add(baseNode);
             }
         });
 
-        if(responseArray.isEmpty()){
+        if (responseArray.isEmpty()) {
             super.botBaseService.sendMessageAuto("rank获取失败", message);
-        }else{
+        } else {
             super.botBaseService.sendGroupMessageForward(responseArray, groupId);
         }
 
 
+    }
+
+    /**
+     * 实用jsoup直接爬去pixiv排行，获取页面html并解析返回图片消息
+     *
+     * @param mode 模式
+     * @return {@link List}<{@link PixivPictureInfo}>
+     */
+    public List<PixivPictureInfo> getRankImageInfo(String mode) {
+        String url = rankUrl;
+        if (StringUtils.isNotEmpty(mode)) {
+            url += "mode=" + mode;
+        }
+        log.info("targetUrl: " + url);
+        String responseContent = HttpUtil.sendHttp(HttpUtil.HttpRequestMethedEnum.HttpGet, url, null, null);
+
+        Document responseHTML = Jsoup.parse(responseContent);
+
+        List<PixivPictureInfo> rankImageInfos = new ArrayList<>();
+        Elements rankPicturesHTML = responseHTML.getElementsByClass("ranking-items");
+        if (rankPicturesHTML != null) {
+            Elements rankContainer = rankPicturesHTML.get(0).getElementsByTag("section");
+            if (rankContainer != null) {
+                //获得rank图片，并进行处理
+                for (Element pictureInfo : rankContainer) {
+                    PixivPictureInfo pixivPictureInfo = new PixivPictureInfo();
+                    pixivPictureInfo.setPid(Integer.parseInt(pictureInfo.attr("data-id")));
+                    pixivPictureInfo.setTitle(pictureInfo.attr("data-title"));
+                    pixivPictureInfo.setAuthor(pictureInfo.attr("data-user-name"));
+                    Elements pictureItemHTMl = pictureInfo.getElementsByClass("ranking-image-item");
+                    if (pictureItemHTMl != null) {
+                        Elements imageSourceHTML = pictureItemHTMl.get(0).getElementsByTag("img");
+                        String imageURL = imageSourceHTML.get(0).attr("data-src");
+                        pixivPictureInfo.setMediumUrl(imageURL);
+                    }
+
+                    rankImageInfos.add(pixivPictureInfo);
+                }
+            }
+        }
+
+        return rankImageInfos;
+    }
+
+    public static void main(String[] args) {
+        PixivRankAction test = new PixivRankAction();
+        test.getRankImageInfo("day");
     }
 }

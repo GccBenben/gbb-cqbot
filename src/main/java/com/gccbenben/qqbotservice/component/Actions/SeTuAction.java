@@ -44,6 +44,12 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
         this.pixivHandleService = pixivHandleService;
     }
 
+    /**
+     * 处理方法
+     *
+     * @param message 消息
+     * @return {@link String}
+     */
     @Override
     public String handleMethod(ObjectNode message) {
         String[] options = message.get("message").asText().split(" ");
@@ -113,6 +119,11 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
         return "";
     }
 
+    /**
+     * 设置选项
+     *
+     * @param option 选项
+     */
     private void setOption(String option) {
         String config = option.split("-")[1].toLowerCase(Locale.ROOT);
         if ("huashi".equals(config)) {

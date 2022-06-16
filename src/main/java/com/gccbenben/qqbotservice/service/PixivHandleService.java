@@ -28,4 +28,6 @@ public interface PixivHandleService {
     String pixivImageDownload(String resourceWebUrl) throws Exception;
 
     void saveResourceInfo(String pid, String artistName, String title, String resourcePath, String medium, String large);
+
+    void saveResourceInfo(PixivPictureInfo pictureInfo);
 }
