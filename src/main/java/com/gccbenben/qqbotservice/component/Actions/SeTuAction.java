@@ -244,7 +244,7 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
             String resourcePath = pixivHandleService.getPixivImageCash(pid);
             if (null == resourcePath) {
                 try {
-                    resourcePath = pixivHandleService.pixivImageDownload(resourceWebUrl);
+                    resourcePath = pixivHandleService.pixivImageDownload(resourceWebUrlLarge);
                     pixivHandleService.saveResourceInfo(pid, artistName, title, resourcePath, resourceWebUrl, resourceWebUrlLarge);
                 } catch (Exception e) {
                     log.error("图片消息获取错误", e.getStackTrace());

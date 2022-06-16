@@ -155,7 +155,7 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
             String resourcePath = pixivHandleService.getPixivImageCash(String.valueOf(pixivPictureInfo.getPid()));
             if (null == resourcePath) {
                 try {
-                    resourcePath = pixivHandleService.pixivImageDownload(pixivPictureInfo.getMediumUrl());
+                    resourcePath = pixivHandleService.pixivImageDownload(pixivPictureInfo.getLargeUrl());
                     pixivPictureInfo.setLocalAddress(resourcePath);
                     pixivHandleService.saveResourceInfo(pixivPictureInfo);
                 } catch (Exception e) {
@@ -218,6 +218,9 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
                         Elements imageSourceHTML = pictureItemHTMl.get(0).getElementsByTag("img");
                         String imageURL = imageSourceHTML.get(0).attr("data-src");
                         pixivPictureInfo.setMediumUrl(imageURL);
+
+                        String largeImageUrl = imageURL.replace("540x540_70", "600x1200_90");
+                        pixivPictureInfo.setLargeUrl(largeImageUrl);
                     }
 
                     rankImageInfos.add(pixivPictureInfo);
