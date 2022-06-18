@@ -2,7 +2,8 @@
   {
     "action": "setu",
     "rule": "/setu",
-    "privilege": "all"
+    "privilege": "all",
+    "desc": "支持查询瑟图，默认屏蔽r18,需要放开可以实用-r18指令，其余没有以-开头的均视为查询关键字。\r\n 范例/setu -r18 keqing r18"
   },
   {
     "action": "sbac",
@@ -12,17 +13,20 @@
   {
     "action": "back_message",
     "rule": "/save",
-    "privilege": "all"
+    "privilege": "all",
+    "desc": "撤回上一条命令，只支持非集合消息撤回。"
   },
   {
     "action": "dice",
     "rule": "/roll",
-    "privilege": "all"
+    "privilege": "all",
+    "desc": "随机roll， 默认roll 100，可以添加参数指定范围，如/roll 10-100,或者/roll 100"
   },
   {
     "action": "pixiv_rank",
     "rule": "/rank",
-    "privilege": "all"
+    "privilege": "all",
+    "desc": "pixiv排行查询，支持tag流行度查询。支持的命令和属性有-rd/-random(随机一张), -t/-tag(tag查询)。\r\n 在非tag查询模式中支持时间维度关键字(week, month, day, male),如/rank week。 \r\n 在tag查询模式中支持-r/-rencent(最近流行),-p/-permanent(长期流行),如: /rank -t -r 原神"
   },
   {
     "action": "pixiv_sese_today",
@@ -32,11 +36,18 @@
   {
     "action": "our_ocg_search",
     "rule": "/ocg",
-    "privilege": "all"
+    "privilege": "all",
+    "desc": "ocg卡查，支持游戏王卡查询"
   },
   {
     "action": "pubg",
     "rule": "/pubg",
     "privilege": "all"
+  },
+  {
+    "action": "help",
+    "rule": "/help",
+    "privilege": "all",
+    "desc": "帮助命令"
   }
 ]

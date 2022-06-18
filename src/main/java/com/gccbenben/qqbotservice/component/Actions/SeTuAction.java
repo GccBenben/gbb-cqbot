@@ -221,6 +221,18 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
             String title = resourceInfo.get("title").asText();
             String artistName = resourceInfo.get("user").get("name").asText();
 
+            //图片查询是否存在数据库缓存，如果存在则直接发送，否则进行下载
+            String resourcePath = pixivHandleService.getPixivImageCash(pid);
+            if (null == resourcePath) {
+                try {
+                    resourcePath = pixivHandleService.pixivImageDownload(resourceWebUrlLarge);
+                    pixivHandleService.saveResourceInfo(pid, artistName, title, resourcePath, resourceWebUrl, resourceWebUrlLarge);
+                } catch (Exception e) {
+                    log.error("图片消息获取错误", e.getStackTrace());
+                    super.botBaseService.sendMessageAuto("图片消息获取错误,无法连接到pixiv服务器", message);
+                    return;
+                }
+            }
 
             ArrayNode tags = (ArrayNode) responseJSON.get("illusts").get(picIndex).get("tags");
             boolean r18Tag = false;
@@ -234,23 +246,12 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
 
             //如果是r-18则看参数重是否允许放过r18，否则直接返回
             if (r18Tag && r18Switch) {
-                String responseMessage = "图片包含r-18,地址：" + resourceWebUrl;
+                String r18WebUrl = "http://ec2-18-237-230-219.us-west-2.compute.amazonaws.com:8999/pixiv" + resourcePath;
+//                String responseMessage = "图片包含r-18,地址：" + resourceWebUrl;
+                String responseMessage = "图片包含r-18,地址：" + r18WebUrl;
                 log.info(responseMessage);
                 super.botBaseService.sendMessageAuto(responseMessage, message);
                 return;
-            }
-
-            //图片查询是否存在数据库缓存，如果存在则直接发送，否则进行下载
-            String resourcePath = pixivHandleService.getPixivImageCash(pid);
-            if (null == resourcePath) {
-                try {
-                    resourcePath = pixivHandleService.pixivImageDownload(resourceWebUrlLarge);
-                    pixivHandleService.saveResourceInfo(pid, artistName, title, resourcePath, resourceWebUrl, resourceWebUrlLarge);
-                } catch (Exception e) {
-                    log.error("图片消息获取错误", e.getStackTrace());
-                    super.botBaseService.sendMessageAuto("图片消息获取错误,无法连接到pixiv服务器", message);
-                    return;
-                }
             }
 
             //返回消息封装

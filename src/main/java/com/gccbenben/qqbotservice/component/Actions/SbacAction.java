@@ -22,7 +22,7 @@ public class SbacAction extends BaseAction implements IMethodHandleStrategy {
     public String handleMethod(ObjectNode message) {
         String id = message.get("user_id").asText();
         if("491330842".equals(id)){
-            super.botBaseService.sendMessageAuto("[CQ:at" + id + "] sbac", message);
+            super.botBaseService.sendMessageAuto("[CQ:at, qq=491330842] sbac", message);
         }
         return "";
     }
