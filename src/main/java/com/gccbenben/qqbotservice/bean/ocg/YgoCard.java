@@ -57,22 +57,22 @@ public class YgoCard {
                 '}';
     }
 
-    public String toBotResponse(String imageBase){
+    public String toBotResponse(String imageBase) {
         this.imageUrl = this.id + ".jpg";
         StringBuilder response = new StringBuilder();
         response.append("[CQ:image,file=" + imageBase + this.imageUrl + "]" + "\r\n");
-        response.append(this.name + "    类型：" + this.type +  "\r\n");
-        if(!"0".equals(this.raceKey)){
-            if(Integer.parseInt(this.attack) <= 0){
+        response.append(this.name + "    类型：" + this.type + "\r\n");
+        if (0 != this.raceKey) {
+            if (Integer.parseInt(this.attack) <= 0) {
                 response.append("攻: ?");
-            }else{
+            } else {
                 response.append("攻: " + this.attack);
             }
 
 
-            if(Integer.parseInt(this.defence) <= 0){
+            if (Integer.parseInt(this.defence) <= 0) {
                 response.append("  防: ?");
-            }else{
+            } else {
                 response.append("  防: " + this.defence);
             }
 

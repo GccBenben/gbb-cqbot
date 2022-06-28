@@ -82,7 +82,7 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
                 return "";
             }
 
-            if(r18Switch){
+            if(!r18Switch){
                 searchOptions.append(" r18");
             }
 //            if (options[1].contains("-") && options.length > 2) {
