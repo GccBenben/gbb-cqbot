@@ -81,6 +81,10 @@ public class SeTuAction extends BaseAction implements IMethodHandleStrategy {
                 super.botBaseService.sendMessageAuto("未输入瑟瑟关键字", message);
                 return "";
             }
+
+            if(r18Switch){
+                searchOptions.append(" r18");
+            }
 //            if (options[1].contains("-") && options.length > 2) {
 //                searchOptions = options[2];
 //            } else {

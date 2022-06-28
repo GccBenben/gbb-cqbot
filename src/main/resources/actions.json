@@ -35,9 +35,9 @@
   },
   {
     "action": "our_ocg_search",
-    "rule": "/ocg",
+    "rule": "/ygo",
     "privilege": "all",
-    "desc": "ocg卡查，支持游戏王卡查询"
+    "desc": "ygo卡查，支持游戏王卡查询"
   },
   {
     "action": "pubg",

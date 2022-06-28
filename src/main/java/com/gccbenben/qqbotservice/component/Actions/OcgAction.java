@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gccbenben.qqbotservice.bean.ocg.OcgDualCardInfo;
+import com.gccbenben.qqbotservice.bean.ocg.YgoCard;
 import com.gccbenben.qqbotservice.component.messageMethodHandleStrategy.Action;
 import com.gccbenben.qqbotservice.component.messageMethodHandleStrategy.IMethodHandleStrategy;
+import com.gccbenben.qqbotservice.service.YgoCardService;
 import com.gccbenben.qqbotservice.utils.HttpUtil;
 import com.gccbenben.qqbotservice.utils.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
@@ -35,6 +38,21 @@ public class OcgAction extends BaseAction implements IMethodHandleStrategy {
 
     private String XSRF_TOKEN = "eyJpdiI6Ik9uajNHaXpCSWQxWlZoNDdodzNGZ1E9PSIsInZhbHVlIjoidG83bk1SaldEdG9aVkdFRGkwelNXSUEyTDREWk9nNXpISnpVRUhvRnBmSXB6eFJKOG1RNytUR0RRanlBS1QyTFp1TVNKdm90VGc5SzI2VWdEMmNPbXc9PSIsIm1hYyI6IjIzYjlmMjdiYzJkMDllODJkMWE2YTIzZTQ1Mzc0NDRiOTE5YjllNmZiMTM2YzMzOTBkM2Y1OTU3NDE1YjQ2MzIifQ==";
 
+    private static final String imageBase = "/ygoInfo/cards/";
+//    private static final String imageBase = "/ygo/card/";
+
+    protected static YgoCardService ygoCardService;
+
+    /**
+     * 注入处理服务
+     *
+     * @param ygoCardService pixiv处理服务
+     */
+    @Autowired
+    public void setYgoCardService(YgoCardService ygoCardService) {
+        this.ygoCardService = ygoCardService;
+    }
+
     /**
      * 处理方法
      *
@@ -50,20 +68,52 @@ public class OcgAction extends BaseAction implements IMethodHandleStrategy {
         List<String> searchInput = Arrays.stream(options).filter(item -> !item.startsWith("/") && !item.startsWith("-")).collect(Collectors.toList());
         if (!searchInput.isEmpty()) {
             for (String item : searchInput) {
-                searchOptions.append(item).append(" ");
+                searchOptions.append(item);
             }
         } else {
             super.botBaseService.sendMessageAuto("未输入卡查关键字", message);
             return "";
         }
 
-        searchCard(message, optionInput, searchOptions.toString());
+//        searchCard(message, optionInput, searchOptions.toString());
+        searchCardByYgo(message, optionInput, searchOptions.toString());
         return null;
+    }
+
+    /**
+     * 从ygo解包来的资源获取卡片查询结果
+     *
+     * @param message 消息
+     * @param options 选项
+     * @param query   查询
+     */
+    private void searchCardByYgo(ObjectNode message, List<String> options, String query){
+        String groupId = message.get("group_id").asText();
+        List<YgoCard> ygoCards = ygoCardService.queryCardByName(query);
+
+        ArrayNode responseArray = JSONUtil.buildJSONArray();
+        ygoCards.forEach(card ->{
+
+            ObjectNode baseNode = JSONUtil.buildJSONObject();
+            baseNode.put("type", "node");
+            ObjectNode dataNode = JSONUtil.buildJSONObject();
+            dataNode.put("name", "bakabaka");
+            dataNode.put("uin", "2253141704");
+            dataNode.put("content",card.toBotResponse(imageBase));
+            baseNode.set("data", dataNode);
+            responseArray.add(baseNode);
+        });
+
+        if(responseArray.isEmpty()){
+            super.botBaseService.sendMessageAuto("未查询到卡片", message);
+        }else{
+            super.botBaseService.sendGroupMessageForward(responseArray, groupId);
+        }
     }
 
 
     /**
-     * 搜索卡
+     * 搜索卡，从第三方网站ocg获取
      *
      * @param message 消息
      * @param options 选项

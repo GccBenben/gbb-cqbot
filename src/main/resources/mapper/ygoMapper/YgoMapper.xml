@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gccbenben.qqbotservice.mapper.ygoMapper.YgoMapper">
+    <select id="queryCardByName" resultType="com.gccbenben.qqbotservice.bean.ocg.YgoCard">
+        select s.id,
+               s.name,
+               s.card_text,
+               t.atk attack,
+               t.def defence,
+               eRace.key raceKey,
+               eRace.value race,
+               eRace.key attributeKey,
+               eAttr.value attribute,
+               eType.key typeKey,
+               eType.value type
+        from ygo_card_status_detail t,
+             ygo_card_enum_info eRace,
+             ygo_card_enum_info eAttr,
+             ygo_card_enum_info eType,
+             ygo_card_texts s
+        where t.id = s.id
+          and s.name like concat('%',#{cardName, jdbcType=VARCHAR},'%')
+          and eRace.key = t.race
+          and eRace.type = '2'
+          and eAttr.key = t.attribute
+          and eAttr.type = '3'
+          and eType.key = t.type
+          and eType.type = '1'
+    </select>
+</mapper>

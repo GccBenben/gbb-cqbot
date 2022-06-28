@@ -36,14 +36,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PixivRankAction extends BaseAction implements IMethodHandleStrategy {
 
-//    private static final String apiUrl = "https://api.obfs.dev/api/pixiv/rank";
-
     private static final String rankUrl = "https://www.pixiv.net/ranking.php?";
 
     private static final String tagUrl = "https://www.pixiv.net/ajax/search/illustrations/";
 
     protected static PixivHandleService pixivHandleService;
 
+    /**
+     * 注入pixiv处理服务
+     *
+     * @param pixivHandleService pixiv处理服务
+     */
     @Autowired
     public void setPixivHandleService(PixivHandleService pixivHandleService) {
         this.pixivHandleService = pixivHandleService;
@@ -179,6 +182,14 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
 
     }
 
+    /**
+     * 根据tag获取流行图片
+     *
+     * @param options 选项
+     * @param message 消息
+     * @param groupId 组id
+     * @throws UnsupportedEncodingException 不支持编码异常
+     */
     private void getTagPopularImages(String[] options, ObjectNode message, String groupId) throws UnsupportedEncodingException {
         String targetUrl = tagUrl;
         //拼接tag搜索选项
@@ -220,6 +231,8 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
 
             assert pictureNodes != null;
             if(pictureNodes.isEmpty()){
+                //如果瑟瑟不存在则直接搜索随机一张相关tag的图
+
                 super.botBaseService.sendMessageAuto("瑟瑟不存在！", message);
                 return;
             }
@@ -285,6 +298,12 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
 
     }
 
+    /**
+     * 构造转发消息体
+     *
+     * @param responseArray   响应数组
+     * @param responseMessage 响应消息
+     */
     private void buildForwadMessage(ArrayNode responseArray, String responseMessage) {
         ObjectNode baseNode = JSONUtil.buildJSONObject();
         baseNode.put("type", "node");
@@ -371,7 +390,7 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
                         pixivPictureInfo.setMediumUrl(imageURL);
 
 //                        String largeImageUrl = imageURL.replace("540x540_70", "600x1200_90");
-                        String largeImageUrl = imageURL.replace("/c/540x540_70", "");
+                        String largeImageUrl = imageURL.replace("/c/240x480", "");
                         pixivPictureInfo.setLargeUrl(largeImageUrl);
                     }
 
