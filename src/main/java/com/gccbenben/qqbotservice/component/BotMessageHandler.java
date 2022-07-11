@@ -85,6 +85,9 @@ public class BotMessageHandler {
             // 执行策略
             methodStrategyContext.handleMethod(message, method);
         }else{
+            //特殊判定，针对阿比打工机器人
+
+
             log.info("不需要处理");
         }
     }
