@@ -93,6 +93,9 @@ public class OcgAction extends BaseAction implements IMethodHandleStrategy {
 
         ArrayNode responseArray = JSONUtil.buildJSONArray();
         ygoCards.forEach(card ->{
+            if(responseArray.size() > 15){
+                return;
+            }
 
             ObjectNode baseNode = JSONUtil.buildJSONObject();
             baseNode.put("type", "node");

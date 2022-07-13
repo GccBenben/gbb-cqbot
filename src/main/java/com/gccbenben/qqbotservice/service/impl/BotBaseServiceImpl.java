@@ -53,9 +53,6 @@ public class BotBaseServiceImpl implements BotBaseService {
             userInfo.setUserId(id);
             redisUtil.put(id + "_private", JSONUtil.toJSONString(userInfo));
         }
-//        PrivateUserInfo userInfo = JSONUtil.parseObject(redisUtil.get(id + "_private").toString(), PrivateUserInfo.class);
-//        userInfo.setUserId(id);
-//        redisUtil.put(id + "_private", userInfo);
 
         redisUtil.put(key, id + "_echo_private_message");
 
@@ -187,8 +184,16 @@ public class BotBaseServiceImpl implements BotBaseService {
         String response = HttpUtil.sendHttpByJson(HttpUtil.HttpRequestMethedEnum.HttpPost, botEndPoint + "/send_group_forward_msg", requestParam, null);
         log.info("sendGroupMessageForward response: " + response);
         ObjectNode responseNode = JSONUtil.toObjectNode(response);
-        if(responseNode.has("status") && "failed".equals(responseNode.get("status"))){
+        if(responseNode.has("status") && "failed".equals(responseNode.get("status").asText())){
             sendGroupMessage("获取排行图片失败或消息发送被拦截", groupId);
+        }else if(responseNode.has("retcode") && "0".equals(responseNode.get("retcode").asText()) &&responseNode.has("data") && responseNode.get("data").has("message_id")){
+            log.info("保存合并消息为最后一条");
+            String messageId = responseNode.get("data").get("message_id").asText();
+            GroupInfo groupInfo = JSONUtil.parseObject(redisUtil.get(groupId + "_group").toString(), GroupInfo.class);
+            groupInfo.setLastMessageId(messageId);
+            redisUtil.put(groupId + "_group", JSONUtil.toJSONString(groupInfo));
+        }else{
+            log.info("保存合并消息失败");
         }
     }
 

@@ -12,6 +12,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import org.apache.commons.lang.StringUtils;
@@ -59,6 +60,7 @@ public class BotMessageHandler {
      *
      * @param message 消息
      */
+    @Async
     public void handleMessage(ObjectNode message) {
 
         String method = "";
@@ -86,7 +88,6 @@ public class BotMessageHandler {
             methodStrategyContext.handleMethod(message, method);
         }else{
             //特殊判定，针对阿比打工机器人
-
 
             log.info("不需要处理");
         }

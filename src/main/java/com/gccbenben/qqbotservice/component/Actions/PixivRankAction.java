@@ -104,6 +104,18 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
                     mode = "male";
                 }
 
+                if("d18".equals(option)){
+                    mode = "daily_r18";
+                }
+
+                if("w18".equals(option)){
+                    mode = "weekly_r18";
+                }
+
+                if("m18".equals(option)){
+                    mode = "male_r18";
+                }
+
                 if ("random".equals(option) || "rd".equals(option)) {
                     random = true;
                 }
@@ -205,7 +217,9 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
             return;
         }
 
+        //todo 修改成可以支持抓r18排行
         String searchWord = URLEncoder.encode(searchOptions.toString(), "UTF-8");
+        searchWord = searchWord.replace("+", "%20");
         targetUrl += searchWord;
         targetUrl += "?word=" + searchWord;
         targetUrl += "&order=date_d&mode=all&p=1&s_mode=s_tag_full&type=illust_and_ugoira&lang=zh";
@@ -242,6 +256,13 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
                 extraInfo.append("不存在相关热搜tag，随机返回一张相关tag图！   \r\n");
 //                super.botBaseService.sendMessageAuto("", message);
                 ArrayNode imgDataNodes = (ArrayNode) responseJSON.get("body").get("illust").get("data");
+
+                //如果这也没有，则返回报错
+                if(imgDataNodes.isEmpty()){
+                    super.botBaseService.sendMessageAuto("找不到相关tag图，这种瑟瑟也太奇怪了！", message);
+                    return;
+                }
+
                 int picIndex = new Random().nextInt(imgDataNodes.size());
                 PixivPictureInfo pixivPictureInfo = BuildPixivPictureInfoFromNode(imgDataNodes, picIndex);
 
@@ -384,6 +405,7 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
                 pixivHandleService.saveResourceInfo(pixivPictureInfo);
             } catch (Exception e) {
                 log.error("图片消息获取错误", e.getStackTrace());
+                super.botBaseService.sendMessageAuto("图片消息获失败", message);
             }
         }
 
@@ -409,10 +431,15 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
     public List<PixivPictureInfo> getRankImageInfo(String mode) {
         String url = rankUrl;
         if (StringUtils.isNotEmpty(mode)) {
-            url += "mode=" + mode;
+            url += "mode=" + mode + "&content=illust";
         }
         log.info("targetUrl: " + url);
-        String responseContent = HttpUtil.sendHttp(HttpUtil.HttpRequestMethedEnum.HttpGet, url, null, null);
+        Map<String, String> header = new HashMap<>();
+        header.put("Cookie", "PHPSESSID=61923269_bz1ocXLID5aRnDDB2SQvm6gWwQKbqWtv;");
+        header.put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15");
+
+//        String responseContent = HttpUtil.sendHttp(HttpUtil.HttpRequestMethedEnum.HttpGet, url, null, null);
+        String responseContent = HttpUtil.sendHttp(HttpUtil.HttpRequestMethedEnum.HttpGet, url, null, header);
 
         Document responseHTML = Jsoup.parse(responseContent);
 

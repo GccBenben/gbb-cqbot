@@ -1,9 +1,15 @@
 [
   {
     "action": "setu",
+    "rule": "/setu_old",
+    "privilege": "all",
+    "desc_no": "支持查询瑟图，默认屏蔽r18,需要放开可以使用-r18指令，其余没有以-开头的均视为查询关键字。\r\n 范例/setu -r18 keqing r18"
+  },
+  {
+    "action": "new_setu_action",
     "rule": "/setu",
     "privilege": "all",
-    "desc": "支持查询瑟图，默认屏蔽r18,需要放开可以实用-r18指令，其余没有以-开头的均视为查询关键字。\r\n 范例/setu -r18 keqing r18"
+    "desc": "支持查询瑟图，默认屏蔽r18,需要放开可以使用-r18/-r指令或者-all/-a命令，其余没有以-开头的均视为查询关键字。\r\n 范例/setu -r18 keqing"
   },
   {
     "action": "sbac",
