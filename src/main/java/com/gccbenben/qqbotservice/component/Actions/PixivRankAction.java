@@ -81,6 +81,7 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
         //搜索其余设置
         boolean random = false;
         boolean tag = false;
+        String r18mode = null;
 
         if (!optionInput.isEmpty()) {
             for (String option : optionInput) {
@@ -123,6 +124,14 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
                 if ("tag".equals(option) || "t".equals(option)) {
                     tag = true;
                 }
+
+                if("r18".equals(option) || "r".equals(option)){
+                    r18mode = "r18";
+                }
+
+                if("all".equals(option) || "a".equals(option)){
+                    r18mode = "all";
+                }
             }
 
         } else {
@@ -133,7 +142,7 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
 
         if (tag) {
             try {
-                getTagPopularImages(options, message, groupId);
+                getTagPopularImages(options, message, groupId, r18mode);
             } catch (UnsupportedEncodingException e) {
                 log.error("tag图片获取失败" + e.getStackTrace());
                 super.botBaseService.sendMessageAuto("tag图片获取失败", message);
@@ -203,7 +212,7 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
      * @param groupId 组id
      * @throws UnsupportedEncodingException 不支持编码异常
      */
-    private void getTagPopularImages(String[] options, ObjectNode message, String groupId) throws UnsupportedEncodingException {
+    private void getTagPopularImages(String[] options, ObjectNode message, String groupId, String r18mode) throws UnsupportedEncodingException {
         String targetUrl = tagUrl;
         //拼接tag搜索选项
         StringBuilder searchOptions = new StringBuilder();
@@ -217,15 +226,35 @@ public class PixivRankAction extends BaseAction implements IMethodHandleStrategy
             return;
         }
 
-        //todo 修改成可以支持抓r18排行
         String searchWord = URLEncoder.encode(searchOptions.toString(), "UTF-8");
         searchWord = searchWord.replace("+", "%20");
         targetUrl += searchWord;
         targetUrl += "?word=" + searchWord;
-        targetUrl += "&order=date_d&mode=all&p=1&s_mode=s_tag_full&type=illust_and_ugoira&lang=zh";
+
+        //根据命令抓去是否包含r18的内容
+        if (StringUtils.isNotEmpty(r18mode)) {
+            if ("all".equals(r18mode)) {
+                targetUrl += "&order=date_d&mode=all&p=2&s_mode=s_tag&type=illust_and_ugoira&lang=zh";
+            } else if ("r18".equals(r18mode)) {
+                targetUrl += "&order=date_d&mode=r18&p=1&s_mode=s_tag&type=illust_and_ugoira&lang=zh";
+            } else {
+                targetUrl += "&order=date_d&mode=safe&p=1&s_mode=s_tag&type=illust_and_ugoira&lang=zh";
+            }
+        } else {
+            targetUrl += "&order=date_d&mode=safe&p=1&s_mode=s_tag&type=illust_and_ugoira&lang=zh";
+        }
+
+//        targetUrl += "&order=date_d&mode=all&p=1&s_mode=s_tag_full&type=illust_and_ugoira&lang=zh";
+
 //        targetUrl += "&order=date_d";
         log.info("searchUrl : " + targetUrl);
-        String tagSearchResponse = HttpUtil.sendHttp(HttpUtil.HttpRequestMethedEnum.HttpGet, targetUrl, null, null);
+
+        Map<String, String> header = new HashMap<>();
+        header.put("Cookie", "PHPSESSID=61923269_bz1ocXLID5aRnDDB2SQvm6gWwQKbqWtv;");
+        header.put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15");
+
+//        String tagSearchResponse = HttpUtil.sendHttp(HttpUtil.HttpRequestMethedEnum.HttpGet, targetUrl, null, null);
+        String tagSearchResponse = HttpUtil.sendHttp(HttpUtil.HttpRequestMethedEnum.HttpGet, targetUrl, null, header);
 
         if (null == tagSearchResponse) {
             super.botBaseService.sendMessageAuto("不准瑟瑟！", message);
